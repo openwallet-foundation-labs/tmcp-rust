@@ -1,0 +1,20 @@
+[package]
+name = "tmcp-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3"
+http = { version = "1" }
+log = "0.4"
+rmcp = { version = "0.11.0" ,  features = ["transport-streamable-http-client", "transport-streamable-http-client-reqwest", "client"] }
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sse-stream = "0.2"
+thiserror = "2.0"
+tsp_sdk = { git = "https://github.com/openwallet-foundation-labs/tsp", rev = "7286631506e52dda9603c757448c9e4380ce5c62" }
+tokio = { version = "1.0", features = ["full"] }
+uuid = { version = "1.0", features = ["v4"] }
+env_logger = "0.11.8"
+base64 = "0.22.1"
