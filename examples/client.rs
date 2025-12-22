@@ -181,7 +181,9 @@ async fn main() -> Result<(), TmcpChatClientError> {
     
     let server_url = &args[1];
     let other_did = &args[2];
-    let mut tmcp_client = TmcpClient::new("tmcp", other_did, TmcpSettings::default()).await?;
+    let mut tmcp_client = TmcpClient::new("tmcp", other_did, TmcpSettings{
+        wallet_url: "sqlite://./wallets/wallet.sqlite".to_string(), ..Default::default()
+    }).await?;
     let mut chat_client = TmcpChatClient::new("tmcp");
     match chat_client.connect_to_server(server_url, &mut tmcp_client).await {
         Ok(()) => {

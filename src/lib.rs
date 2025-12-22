@@ -47,12 +47,14 @@ impl TmcpClient {
         } else {
             alias.to_string()
         };
+        println!("settings.wallet_url: {}", settings.wallet_url);
         // TODO: Create AskarSecureStorage if not exists
         let storage =
             AskarSecureStorage::open(&settings.wallet_url, settings.wallet_password.as_bytes())
                 .await;
+        println!("after open storage");
         let storage = match storage {
-            Err(_e) => {
+            Err(e) => {
                 AskarSecureStorage::new(&settings.wallet_url, &settings.wallet_password.as_bytes())
                     .await
             }
@@ -62,12 +64,20 @@ impl TmcpClient {
         let (vids, aliases, keys) = storage?.read().await?;
         let mut wallet = AsyncSecureStore::new();
         wallet.import(vids, aliases, keys)?;
+        println!("wallet_alias: {}", wallet_alias);
         let mut my_did: Option<String> = wallet.resolve_alias(&wallet_alias)?;
+        println!("after resolve alias my_did: {:?}", my_did);
+        let did_server = settings.did_server.to_string();
+        let client = reqwest::Client::new();
+        //let published_did = get::get_did_doc(&client, &did_server, &wallet_alias).await?;
+        //println!("published_did: {}", published_did);
         if let None = my_did {
             let address = settings.did_server.to_string();
-            let client = reqwest::Client::new();
-            let did_server = settings.did_server.to_string();
+            
+            
+            println!("did_server get_did_doc: {}", did_server);
             let published_did = get::get_did_doc(&client, &did_server, &alias).await?;
+            println!("published_did: {}", published_did);
             if published_did {
                 my_did = Some(format!(
                     "did:web:{}:endpoint:{}",
@@ -91,7 +101,7 @@ impl TmcpClient {
         // TODO: Verify vid
         // TODO: Create vid if not exists
         // For now, copy the wallet.sqlite from the tmcp-python's client.
-        verify::verify_did(&my_did, &wallet, Some(wallet_alias)).await?;
+        //verify::verify_did(&my_did, &wallet, Some(wallet_alias)).await?;
         Ok(Self {
             inner: reqwest::Client::new(),
             my_did,
