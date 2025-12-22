@@ -41,7 +41,7 @@ pub struct TmcpClient {
 }
 
 impl TmcpClient {
-    pub async fn new(alias: String, other_did: String, settings: settings::TmcpSettings) -> Result<Self, TmcpError> {
+    pub async fn new(alias: &str, other_did: &str, settings: settings::TmcpSettings) -> Result<Self, TmcpError> {
         let wallet_alias = if settings.use_webvh {
             format!("{}vh", alias)
         } else {
@@ -76,7 +76,7 @@ impl TmcpClient {
             } else {
                 let private_vid = create(
                     Some(&settings.did_server),
-                    address,
+                    &address,
                     Some(alias),
                     &mut wallet,
                     &settings.did_type,
@@ -95,7 +95,7 @@ impl TmcpClient {
         Ok(Self {
             inner: reqwest::Client::new(),
             my_did,
-            other_did,
+            other_did: other_did.to_string(),
             wallet,
             settings,
         })

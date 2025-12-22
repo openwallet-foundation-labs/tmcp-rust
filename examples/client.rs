@@ -1,14 +1,13 @@
 use std::env;
 use std::io::{self, Write};
-use std::sync::Arc;
 
 use rmcp::model::{CallToolRequestParam, ClientCapabilities, ClientInfo, Implementation};
 use rmcp::{RoleClient, ServiceExt, service::RunningService};
 use serde_json::json;
 use tmcp_rs::TmcpClient;
 use tmcp_rs::errors::TmcpError;
+use tmcp_rs::settings::TmcpSettings;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tsp_sdk::AsyncSecureStore;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TmcpChatClientError {
@@ -19,6 +18,8 @@ pub enum TmcpChatClientError {
     Client(String),
     #[error("IO error: {0}")]
     IoError(#[from] io::Error),
+    #[error("Client service error: {0}")]
+    RmcpClientInitializeError(#[from] rmcp::service::ServiceError),
 }
 
 /// TMCP Client implementation
@@ -40,7 +41,6 @@ impl TmcpChatClient {
     /// Connect to an MCP server
     pub async fn connect_to_server(&mut self, url_or_id: &str, tmcp_client: &TmcpClient) -> Result<(), TmcpError> {
         println!("Server endpoint: {}", url_or_id);
-        let tmcp_manager_hook = TmcpTransportHook::new(my_did.to_string(), other_did.to_string(), wallet,true);
 
         // Create streamable HTTP transport
         let transport = tmcp_client.create_transport(url_or_id);
@@ -182,9 +182,10 @@ async fn main() -> Result<(), TmcpChatClientError> {
     let server_url = &args[1];
     let other_did = &args[2];
     let mut tmcp_client = TmcpClient::new("tmcp", other_did, TmcpSettings::default()).await?;
-    match TmcpChatClient::new("tmcp").connect_to_server(server_url, &mut tmcp_client).await {
+    let mut chat_client = TmcpChatClient::new("tmcp");
+    match chat_client.connect_to_server(server_url, &mut tmcp_client).await {
         Ok(()) => {
-            if let Err(e) = client.chat_loop().await {
+            if let Err(e) = chat_client.chat_loop().await {
                 eprintln!("Error in chat loop: {}", e);
             }
         }
@@ -195,7 +196,7 @@ async fn main() -> Result<(), TmcpChatClientError> {
     }
 
     // Cleanup
-    if let Err(e) = client.cleanup().await {
+    if let Err(e) = chat_client.cleanup().await {
         eprintln!("Error during cleanup: {}", e);
     }
 

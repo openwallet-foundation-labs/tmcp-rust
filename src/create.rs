@@ -15,8 +15,8 @@ use uuid::Uuid;
 /// Returns the created DID if successful, otherwise an error.
 pub async fn create(
     address: Option<&str>,
-    server: String,
-    alias: Option<String>,
+    server: &str,
+    alias: Option<&str>,
     vid_wallet: &mut AsyncSecureStore,
     r#type: &DidType,
     client: &reqwest::Client,
@@ -24,7 +24,7 @@ pub async fn create(
 ) -> Result<OwnedVid, Error> {
     let username: String = format!(
         "{}-{}",
-        alias.as_ref().unwrap_or(&String::new()).replace(' ', ""),
+        alias.as_ref().unwrap_or(&"").replace(' ', ""),
         Uuid::new_v4()
     )
     .chars()
@@ -119,7 +119,7 @@ pub async fn create(
             };
             info!("published DID history");
             if let Some(alias) = alias {
-                vid_wallet.set_alias(alias, private_vid.identifier().to_string())?;
+                vid_wallet.set_alias(alias.to_string(), private_vid.identifier().to_string())?;
             }
 
             private_vid
@@ -134,7 +134,7 @@ async fn create_did_web(
     transport: Url,
     vid_wallet: &AsyncSecureStore,
     username: &str,
-    alias: Option<String>,
+    alias: Option<&str>,
     client: &reqwest::Client,
 ) -> Result<OwnedVid, Error> {
     let did = format!(
@@ -143,7 +143,7 @@ async fn create_did_web(
     );
 
     if let Some(alias) = alias {
-        vid_wallet.set_alias(alias.clone(), did.clone())?;
+        vid_wallet.set_alias(alias.to_string(), did.clone())?;
         info!("added alias {alias} -> {did}");
     }
 
