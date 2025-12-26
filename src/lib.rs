@@ -22,6 +22,7 @@ use rmcp::{
 };
 use sse_stream::{Sse, SseStream};
 use tsp_sdk::{AskarSecureStorage, AsyncSecureStore, SecureStorage, VerifiedVid};
+use uuid::Uuid;
 mod create;
 pub mod errors;
 mod get;
@@ -55,34 +56,38 @@ impl TmcpClient {
         println!("after open storage");
         let storage = match storage {
             Err(e) => {
+                println!("unable to open storage {:?}", e);
                 AskarSecureStorage::new(&settings.wallet_url, &settings.wallet_password.as_bytes())
                     .await
             }
             _ => storage,
         };
-
-        let (vids, aliases, keys) = storage?.read().await?;
+        let storage = storage?;
+        let (vids, aliases, keys) = storage.read().await?;
         let mut wallet = AsyncSecureStore::new();
         wallet.import(vids, aliases, keys)?;
+        
         println!("wallet_alias: {}", wallet_alias);
         let mut my_did: Option<String> = wallet.resolve_alias(&wallet_alias)?;
-        println!("after resolve alias my_did: {:?}", my_did);
         let did_server = settings.did_server.to_string();
         let client = reqwest::Client::new();
-        //let published_did = get::get_did_doc(&client, &did_server, &wallet_alias).await?;
-        //println!("published_did: {}", published_did);
-        if let None = my_did {
+        if let Some(my_did) = &my_did {
+            //Resolve and verify public key material for a VID identified by vid and add it to the wallet as a relationship
+            verify::verify_did(&my_did, &wallet, None).await?;
+        } else {
             let address = settings.did_server.to_string();
-            
-            
-            println!("did_server get_did_doc: {}", did_server);
-            let published_did = get::get_did_doc(&client, &did_server, &alias).await?;
-            println!("published_did: {}", published_did);
-            if published_did {
-                my_did = Some(format!(
-                    "did:web:{}:endpoint:{}",
-                    address, wallet_alias
-                ));
+            let username = format!("{}-{}", alias, Uuid::new_v4());
+            let published_did = match get::get_did_doc(&client, &did_server, &username).await {
+                Ok(published_did) => Some(published_did),
+                Err(e) => {
+                    println!("get_did_doc error: {}", e);
+                    None
+                }
+            };
+            println!("published_did: {:?}", published_did);
+            if let Some(published_did) = published_did {
+                my_did = Some(published_did.clone());
+                verify::verify_did(&published_did, &wallet, None).await?;
             } else {
                 let private_vid = create(
                     Some(&settings.did_server),
@@ -95,7 +100,13 @@ impl TmcpClient {
                 )
                 .await?;
                 my_did = Some(private_vid.identifier().to_string());
+                let meta_data = verify::verify_did(&private_vid.identifier().to_string(), &wallet, None).await?;
+                wallet.add_private_vid(private_vid, meta_data)?;   
             }
+            verify::verify_did(&other_did.to_string(), &wallet, None).await?;
+            let v = wallet.export()?;
+            let (vids, aliases, keys) = v.clone();
+            storage.persist(v).await?;
         }
         let my_did = my_did.unwrap_or_default();
         // TODO: Verify vid
