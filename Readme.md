@@ -42,5 +42,5 @@ You should get:
 I'll help you calculate 2 + 3 using the `add` function.
 intended_receiver: did:webvh:QmUzwbsRtCcXaNCpcrHDH49R3vV8H4Qra16xprFM7jSseV:did.teaspoon.world:endpoint:tmcp-2a831a23-f06c-4027-9691-6f5d4580fc74
 [2025-12-29T09:28:23Z INFO  client] Calling tool add with args {"a":2,"b":3}
-`7`
+`5`
 Processing query: 2 + 3
