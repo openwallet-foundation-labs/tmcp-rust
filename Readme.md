@@ -36,12 +36,18 @@ TMCP Client Started!
 Type your queries or 'quit' to exit
 ```
 
-``` Type 2 + 3```
+``` Type 10 + 5```
 
 You should get:
 
-I'll help you calculate 2 + 3 using the `add` function.
+I'll help you calculate 10 + 5 using the `add` function.
 intended_receiver: did:webvh:QmUzwbsRtCcXaNCpcrHDH49R3vV8H4Qra16xprFM7jSseV:did.teaspoon.world:endpoint:tmcp-2a831a23-f06c-4027-9691-6f5d4580fc74
-[2025-12-29T09:28:23Z INFO  client] Calling tool add with args {"a":2,"b":3}
-`5`
-Processing query: 2 + 3
+[2025-12-29T09:28:23Z INFO  client] Calling tool add with args {"a":10,"b":5}
+`15`
+Processing query: 10 + 15
+
+
+https://github.com/user-attachments/assets/174423ce-662d-44ee-be35-7fba4784e70a
+
+
+
