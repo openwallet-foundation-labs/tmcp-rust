@@ -8,7 +8,8 @@ Progress:
 - [X] Publish my_did
 - [X] Seal TSP Message for MCP using correct wallet
 - [X] Open TSP Message for MCP using correct wallet
-
+- [X] TMCP Client testing
+- [] TMCP Server testing
 
 Connecting Tmcp Python server
 Steps: 
