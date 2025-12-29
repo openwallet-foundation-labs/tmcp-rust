@@ -54,7 +54,7 @@ impl TmcpClient {
         let storage = match storage {
             Err(e) => {
                 log::warn!("Warning:unable to open storage: {:?}. Creating a new one", e);
-                AskarSecureStorage::new(&settings.wallet_url, &settings.wallet_password.as_bytes())
+                AskarSecureStorage::new(&settings.wallet_url, settings.wallet_password.as_bytes())
                     .await
             }
             _ => storage,
@@ -69,7 +69,7 @@ impl TmcpClient {
         let client = reqwest::Client::new();
         if let Some(my_did) = &my_did {
             //Resolve and verify public key material for a VID identified by vid and add it to the wallet as a relationship
-            verify::verify_did(&my_did, &wallet, None).await?;
+            verify::verify_did(my_did, &wallet, None).await?;
         } else {
             let address = settings.did_server.to_string();
             let username = format!("{}-{}", alias, Uuid::new_v4());
@@ -95,12 +95,12 @@ impl TmcpClient {
                 )
                 .await?;
                 my_did = Some(private_vid.identifier().to_string());
-                let meta_data = verify::verify_did(&private_vid.identifier().to_string(), &wallet, None).await?;
+                let meta_data = verify::verify_did(private_vid.identifier(), &wallet, None).await?;
                 wallet.add_private_vid(private_vid, meta_data)?;   
             }
-            verify::verify_did(&other_did.to_string(), &wallet, None).await?;
-            let v = wallet.export()?;
-            storage.persist(v).await?;
+            verify::verify_did(other_did, &wallet, None).await?;
+            let wallet_export = wallet.export()?;
+            storage.persist(wallet_export).await?;
         }
         let my_did = my_did.unwrap_or_default();
         Ok(Self {
@@ -122,22 +122,20 @@ impl TmcpClient {
         };
         use std::borrow::Cow;
 
-        if response.status() == reqwest::StatusCode::UNAUTHORIZED {
-            if let Some(header) = response.headers().get(WWW_AUTHENTICATE) {
-                let header = header
-                    .to_str()
-                    .map_err(|_| {
-                        StreamableHttpError::UnexpectedServerResponse(Cow::from(
-                            "invalid www-authenticate header value",
-                        ))
-                    })?
-                    .to_string();
-                return Err(StreamableHttpError::AuthRequired(
-                    rmcp::transport::streamable_http_client::AuthRequiredError {
-                        www_authenticate_header: header,
-                    },
-                ));
-            }
+        if response.status() == reqwest::StatusCode::UNAUTHORIZED && let Some(header) = response.headers().get(WWW_AUTHENTICATE) {
+            let header = header
+                .to_str()
+                .map_err(|_| {
+                    StreamableHttpError::UnexpectedServerResponse(Cow::from(
+                        "invalid www-authenticate header value",
+                    ))
+                })?
+                .to_string();
+            return Err(StreamableHttpError::AuthRequired(
+                rmcp::transport::streamable_http_client::AuthRequiredError {
+                    www_authenticate_header: header,
+                },
+            ));
         }
 
         let status = response.status();
@@ -177,7 +175,7 @@ impl TmcpClient {
                                 log::error!("failed to open message: {}", e);
                             }
                         }
-                        return sse;
+                        sse
                     })
                 });
                 Ok(StreamableHttpPostResponse::Sse(
@@ -193,10 +191,10 @@ impl TmcpClient {
 
                 // Apply TSP open_message transformation if available
                 let processed_body = tsp_messages::open_message(body, &self.wallet.clone())
-                    .map_err(|e| StreamableHttpError::Client(e))?;
+                    .map_err(StreamableHttpError::Client)?;
 
                 let message: ServerJsonRpcMessage = serde_json::from_str(&processed_body)
-                    .map_err(|e| StreamableHttpError::Deserialize(e))?;
+                    .map_err(StreamableHttpError::Deserialize)?;
                 Ok(StreamableHttpPostResponse::Json(message, session_id))
             }
             _ => {
@@ -234,7 +232,7 @@ impl StreamableHttpClient for TmcpClient {
         // Apply TSP seal_message transformation if transport hook is available
         let message_to_send = {
             let json_str =
-                serde_json::to_string(&message).map_err(|e| StreamableHttpError::Deserialize(e))?;
+                serde_json::to_string(&message).map_err(StreamableHttpError::Deserialize)?;
             // Use the transport hook to seal the message
             let sealed_data = tsp_messages::seal_message(json_str, &self.wallet, &self.my_did, &self.other_did);
             let sealed_data = match sealed_data {

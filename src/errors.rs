@@ -2,6 +2,7 @@ use std::string::FromUtf8Error;
 
 use rmcp::service::ClientInitializeError;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, thiserror::Error)]
 pub enum TmcpError {
     /// Error from reqwest HTTP client
@@ -26,7 +27,9 @@ pub enum TmcpError {
     #[error("UTF-8 error: {0}")]
     StringError(#[from] FromUtf8Error),
     #[error("Client initialization error: {0}")]
+    #[allow(clippy::result_large_err)]
     RmcpClientInitializeError(#[from] ClientInitializeError),
     #[error("Client service error: {0}")]
     RmcpClientServiceError(#[from] rmcp::service::ServiceError),
+    
 }

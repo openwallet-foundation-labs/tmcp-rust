@@ -15,13 +15,13 @@ use tsp_sdk::{AsyncSecureStore, Error, VerifiedVid};
 ///
 /// A Result containing Ok if the DID document was successfully verified and stored, otherwise an error.
 pub async fn verify_did(
-    did: &String,
+    did: &str,
     wallet: &AsyncSecureStore,
     alias: Option<String>,
 ) -> Result<Option<Value>, Error> {
     //Resolve and verify the vid identified by id, by using online and offline methods
     let (vid, metadata) = tsp_sdk::vid::verify_vid(did).await?;
     //Resolve and verify public key material for a VID identified by vid and add it to the wallet as a relationship
-    wallet.verify_vid(&vid.identifier(), alias).await?;
+    wallet.verify_vid(vid.identifier(), alias).await?;
     Ok(metadata)
 }

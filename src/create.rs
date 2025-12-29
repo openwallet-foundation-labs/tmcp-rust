@@ -39,12 +39,12 @@ pub async fn create(
     let private_vid = match r#type {
         DidType::Web => {
             create_did_web(
-                &did_server,
+                did_server,
                 transport,
-                &vid_wallet,
+                vid_wallet,
                 &username,
                 alias,
-                &client,
+                client,
             )
             .await?
         }
@@ -87,7 +87,7 @@ pub async fn create(
             };
             info!(
                 "published DID document at {}",
-                tsp_sdk::vid::did::get_resolve_url(private_vid.vid().identifier())?.to_string()
+                tsp_sdk::vid::did::get_resolve_url(private_vid.vid().identifier())?
             );
 
             match client
@@ -174,7 +174,7 @@ async fn create_did_web(
     };
     info!(
         "published DID document at {}",
-        tsp_sdk::vid::did::get_resolve_url(&did)?.to_string()
+        tsp_sdk::vid::did::get_resolve_url(&did)?
     );
 
     Ok(private_vid)

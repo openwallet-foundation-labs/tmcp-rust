@@ -27,15 +27,15 @@ pub async fn get_did_doc(
             // Process the DID document as needed
             let did_doc: serde_json::Value = serde_json::from_str(&did_doc)?;
             let Some(did_doc) = did_doc.get("state") else {
-                return Err(errors::TmcpError::TspError(tsp_sdk::Error::DecodeState("State not found".into())));
+                return Err(errors::TmcpError::TspError(tsp_sdk::Error::DecodeState("State not found")));
             };
 
             let did_doc: DidDocument = serde_json::from_value(did_doc.clone())?;
-            return Ok(did_doc.id);
+            Ok(did_doc.id)
         }
         resp => {
-            eprintln!("Failed to retrieve DID document: HTTP {}", resp.status());
-            return Err(errors::TmcpError::TspError(tsp_sdk::Error::DecodeState("Response error")));
+            log::warn!("Failed to retrieve DID document: HTTP {}", resp.status());
+            Err(errors::TmcpError::TspError(tsp_sdk::Error::DecodeState("Response error")))
         }
     }
 }
