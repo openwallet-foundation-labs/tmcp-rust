@@ -57,14 +57,12 @@ pub async fn create(
             private_vid
         }
         DidType::Webvh => {
-            println!("did_server: {did_server} username: {username} transport: {transport}");
             let (private_vid, history, update_kid, update_key) =
                 tsp_sdk::vid::did::webvh::create_webvh(
                     &format!("{did_server}/endpoint/{username}"),
                     transport,
                 )
                 .await?;
-            println!("private_vid: {:?}", private_vid);
             vid_wallet
                 .add_secret_key(update_kid, update_key)
                 .expect("Cannot store update key");
@@ -75,8 +73,6 @@ pub async fn create(
                 .send()
                 .await
                 .inspect(|r| debug!("DID server responded with status code {}", r.status()))
-                .expect("Could not publish VID on server")
-                .error_for_status()
             {
                 Ok(response) => response.json().await.expect("Could not decode VID"),
                 Err(e) => {

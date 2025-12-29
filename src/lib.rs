@@ -38,7 +38,6 @@ pub struct TmcpClient {
     my_did: String,
     other_did: String,
     wallet: AsyncSecureStore,
-    settings: settings::TmcpSettings,
 }
 
 impl TmcpClient {
@@ -48,15 +47,13 @@ impl TmcpClient {
         } else {
             alias.to_string()
         };
-        println!("settings.wallet_url: {}", settings.wallet_url);
         // TODO: Create AskarSecureStorage if not exists
         let storage =
             AskarSecureStorage::open(&settings.wallet_url, settings.wallet_password.as_bytes())
                 .await;
-        println!("after open storage");
         let storage = match storage {
             Err(e) => {
-                println!("unable to open storage {:?}", e);
+                log::warn!("Warning:unable to open storage: {:?}. Creating a new one", e);
                 AskarSecureStorage::new(&settings.wallet_url, &settings.wallet_password.as_bytes())
                     .await
             }
@@ -67,7 +64,6 @@ impl TmcpClient {
         let mut wallet = AsyncSecureStore::new();
         wallet.import(vids, aliases, keys)?;
         
-        println!("wallet_alias: {}", wallet_alias);
         let mut my_did: Option<String> = wallet.resolve_alias(&wallet_alias)?;
         let did_server = settings.did_server.to_string();
         let client = reqwest::Client::new();
@@ -80,11 +76,10 @@ impl TmcpClient {
             let published_did = match get::get_did_doc(&client, &did_server, &username).await {
                 Ok(published_did) => Some(published_did),
                 Err(e) => {
-                    println!("get_did_doc error: {}", e);
+                    log::warn!("Warning:unable to get published did: {:?}. Creating a new one", e);
                     None
                 }
             };
-            println!("published_did: {:?}", published_did);
             if let Some(published_did) = published_did {
                 my_did = Some(published_did.clone());
                 verify::verify_did(&published_did, &wallet, None).await?;
@@ -105,20 +100,14 @@ impl TmcpClient {
             }
             verify::verify_did(&other_did.to_string(), &wallet, None).await?;
             let v = wallet.export()?;
-            let (vids, aliases, keys) = v.clone();
             storage.persist(v).await?;
         }
         let my_did = my_did.unwrap_or_default();
-        // TODO: Verify vid
-        // TODO: Create vid if not exists
-        // For now, copy the wallet.sqlite from the tmcp-python's client.
-        //verify::verify_did(&my_did, &wallet, Some(wallet_alias)).await?;
         Ok(Self {
             inner: reqwest::Client::new(),
             my_did,
             other_did: other_did.to_string(),
             wallet,
-            settings,
         })
     }
 
