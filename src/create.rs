@@ -57,14 +57,14 @@ pub async fn create(
             private_vid
         }
         DidType::Webvh => {
-            let (private_vid, history, update_kid, update_key) =
+            let (private_vid, history, keys) =
                 tsp_sdk::vid::did::webvh::create_webvh(
                     &format!("{did_server}/endpoint/{username}"),
                     transport,
                 )
                 .await?;
             vid_wallet
-                .add_secret_key(update_kid, update_key)
+                .add_secret_key(keys.update_kid, keys.update_key)
                 .expect("Cannot store update key");
 
             let _: Vid = match client

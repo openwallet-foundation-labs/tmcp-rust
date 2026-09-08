@@ -34,6 +34,6 @@ pub fn open_message(data: String, wallet: &AsyncSecureStore) -> Result<String, e
 /// * `wallet`: A reference to an `AsyncSecureStore` instance, used to perform the sealing operation
 #[allow(clippy::result_large_err)]
 pub fn seal_message(data: String, wallet: &AsyncSecureStore, my_did: &str, other_did: &str) -> Result<String, errors::TmcpError> {
-    let (_url, data) = wallet.seal_message(my_did, other_did, None, &data.into_bytes())?;
+    let (_url, data) = wallet.seal_message(my_did, other_did, &data.into_bytes())?;
     Ok(general_purpose::URL_SAFE.encode(&data))
 }

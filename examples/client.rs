@@ -140,6 +140,7 @@ impl TmcpChatClient {
                 let tool_request = CallToolRequestParam {
                     name: name.clone().into(),
                     arguments: Some(input.as_object().unwrap().clone()),
+                    task: None,
                 };
                 let result = client.call_tool(tool_request).await?;
                 log::info!("Calling tool {name} with args {input}");
