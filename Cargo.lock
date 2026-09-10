@@ -4289,9 +4289,9 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tsp_sdk"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0a6e9500e77792f0f4b08f09cc86c7458e095d6606a36302d3d1147b8fd49e4"
+checksum = "48ee00c6ec3d7e74bc6e453b76ffb551146ecd6505910af553dddc024ab813e9"
 dependencies = [
  "aries-askar",
  "async-stream",
