@@ -57,15 +57,14 @@ pub async fn create(
             private_vid
         }
         DidType::Webvh => {
-            let (private_vid, history, keys) =
-                tsp_sdk::vid::did::webvh::create_webvh(
-                    &format!("{did_server}/endpoint/{username}"),
-                    transport,
-                )
-                .await?;
-            vid_wallet
-                .add_secret_key(keys.update_kid, keys.update_key)
-                .expect("Cannot store update key");
+            // the VID's keys and the update keys are made in the wallet's secure area,
+            // under the update keys' multikeys, and stay there
+            let (private_vid, history, _keys) = tsp_sdk::vid::did::webvh::create_webvh(
+                vid_wallet.secure_area(),
+                &format!("{did_server}/endpoint/{username}"),
+                transport,
+            )
+            .await?;
 
             let _: Vid = match client
                 .post(format!("https://{did_server}/add-vid"))
