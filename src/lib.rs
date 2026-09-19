@@ -60,9 +60,10 @@ impl TmcpClient {
             _ => storage,
         };
         let storage = storage?;
-        let (vids, aliases, keys) = storage.read().await?;
+        // the wallet's state: VIDs, aliases, and the keys in their secure area
+        let state = storage.read().await?;
         let mut wallet = AsyncSecureStore::new();
-        wallet.import(vids, aliases, keys)?;
+        wallet.import(state)?;
         
         let mut my_did: Option<String> = wallet.resolve_alias(&wallet_alias)?;
         let did_server = settings.did_server.to_string();
